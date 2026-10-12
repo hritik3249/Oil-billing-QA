@@ -1,0 +1,1335 @@
+{
+	"info": {
+		"name": "Oil Billing API - Test Suite",
+		"description": "Comprehensive API tests for Oil Billing System. Tests cover authentication, CRUD operations, validation, and error handling.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "noauth"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global setup - runs before each request",
+					""
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login - Valid Credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Auth cookie is set\", function () {",
+									"    pm.expect(pm.cookies.has('oil_admin_auth')).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{adminUser}}\",\n  \"password\": \"{{adminPass}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Invalid Username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Response has error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"});",
+									"",
+									"pm.test(\"No auth cookie set\", function () {",
+									"    pm.expect(pm.cookies.has('oil_admin_auth')).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"wronguser\",\n  \"password\": \"{{adminPass}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Invalid Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message contains 'Invalid credentials'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.include('Invalid credentials');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{adminUser}}\",\n  \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Empty Credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 400\", function () {",
+									"    pm.expect([400, 401]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Login fails\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.not.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"\",\n  \"password\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Get All Customers - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Customers - Unauthenticated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message is Unauthorized\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.eql('Unauthorized');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Clear cookies for this request",
+									"pm.cookies.clear();"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has customer object with UUID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('area');",
+									"    pm.expect(jsonData).to.have.property('phone');",
+									"    pm.expect(jsonData).to.have.property('vehicle_number');",
+									"    ",
+									"    // Save customer ID for later tests",
+									"    pm.environment.set('testCustomerId', jsonData.id);",
+									"    pm.environment.set('testCustomerName', jsonData.name);",
+									"});",
+									"",
+									"pm.test(\"Customer data matches input\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql('QA Test Customer');",
+									"    pm.expect(jsonData.area).to.eql('Test Area');",
+									"    pm.expect(jsonData.phone).to.eql('9876543210');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"QA Test Customer\",\n  \"area\": \"Test Area\",\n  \"phone\": \"9876543210\",\n  \"vehicle_number\": \"KA01QA1234\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer - Missing Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500 or 400\", function () {",
+									"    pm.expect([400, 500]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Response has error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"area\": \"Test Area\",\n  \"phone\": \"9876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer By ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is a single customer object\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.id).to.eql(pm.environment.get('testCustomerId'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customers?id={{testCustomerId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"],
+							"query": [
+								{
+									"key": "id",
+									"value": "{{testCustomerId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Customer - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Customer data is updated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql('Updated QA Customer');",
+									"    pm.expect(jsonData.area).to.eql('Updated Area');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"{{testCustomerId}}\",\n  \"name\": \"Updated QA Customer\",\n  \"area\": \"Updated Area\",\n  \"phone\": \"9999999999\",\n  \"vehicle_number\": \"KA02XY5678\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Customers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains matching customers\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0].name).to.include('QA');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customers?search=QA",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"],
+							"query": [
+								{
+									"key": "search",
+									"value": "QA"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Invoice Number",
+			"item": [
+				{
+					"name": "Get Next Invoice Number",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has invoice_no field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('invoice_no');",
+									"    pm.expect(jsonData).to.have.property('next_number');",
+									"    pm.expect(jsonData).to.have.property('month');",
+									"    ",
+									"    // Save for creating a bill",
+									"    pm.environment.set('nextInvoiceNo', jsonData.invoice_no);",
+									"});",
+									"",
+									"pm.test(\"Invoice number format is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.invoice_no).to.match(/^ET-\\d{2}-\\d+$/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/invoice-number",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "invoice-number"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Invoice Number - Unauthenticated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.cookies.clear();"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/invoice-number",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "invoice-number"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bills",
+			"item": [
+				{
+					"name": "Create Bill - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Bill created with correct calculations\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('bill_number');",
+									"    pm.expect(jsonData).to.have.property('total_amount');",
+									"    pm.expect(jsonData).to.have.property('amount_paid');",
+									"    pm.expect(jsonData).to.have.property('due_amount');",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    ",
+									"    // Verify calculation: 10 * 100 = 1000",
+									"    pm.expect(jsonData.total_amount).to.eql(1000);",
+									"    pm.expect(jsonData.amount_paid).to.eql(500);",
+									"    pm.expect(jsonData.due_amount).to.eql(500);",
+									"    ",
+									"    // Save bill ID for later tests",
+									"    pm.environment.set('testBillId', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bill_number\": \"{{nextInvoiceNo}}\",\n  \"customer_id\": \"{{testCustomerId}}\",\n  \"customer_name\": \"{{testCustomerName}}\",\n  \"customer_area\": \"Test Area\",\n  \"vehicle_number\": \"KA01QA1234\",\n  \"date\": \"2026-10-12\",\n  \"items\": [\n    {\n      \"oil_type_id\": \"oil1\",\n      \"oil_name\": \"Coconut Oil 1L\",\n      \"quantity\": 10,\n      \"rate\": 100\n    }\n  ],\n  \"amount_paid\": 500,\n  \"notes\": \"Test bill created by QA\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bill - Multiple Items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Total calculated correctly for multiple items\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    // (5*100) + (10*50) + (2*250) = 500 + 500 + 500 = 1500",
+									"    pm.expect(jsonData.total_amount).to.eql(1500);",
+									"    pm.expect(jsonData.items.length).to.eql(3);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Get a fresh invoice number",
+									"pm.sendRequest({",
+									"    url: pm.environment.get('baseUrl') + '/api/invoice-number',",
+									"    method: 'GET'",
+									"}, function (err, response) {",
+									"    if (!err) {",
+									"        var data = response.json();",
+									"        pm.environment.set('nextInvoiceNo', data.invoice_no);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bill_number\": \"{{nextInvoiceNo}}\",\n  \"customer_id\": \"{{testCustomerId}}\",\n  \"customer_name\": \"{{testCustomerName}}\",\n  \"customer_area\": \"Test Area\",\n  \"vehicle_number\": \"KA01QA1234\",\n  \"date\": \"2026-10-12\",\n  \"items\": [\n    {\n      \"oil_type_id\": \"oil1\",\n      \"oil_name\": \"Oil A\",\n      \"quantity\": 5,\n      \"rate\": 100\n    },\n    {\n      \"oil_type_id\": \"oil2\",\n      \"oil_name\": \"Oil B\",\n      \"quantity\": 10,\n      \"rate\": 50\n    },\n    {\n      \"oil_type_id\": \"oil3\",\n      \"oil_name\": \"Oil C\",\n      \"quantity\": 2,\n      \"rate\": 250\n    }\n  ],\n  \"amount_paid\": 0,\n  \"notes\": \"Multi-item test bill\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bill - Zero Quantity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message mentions quantity\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.include('quantity');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bill_number\": \"TEST-ZERO\",\n  \"customer_id\": \"{{testCustomerId}}\",\n  \"customer_name\": \"Test\",\n  \"date\": \"2026-10-12\",\n  \"items\": [\n    {\n      \"oil_type_id\": \"oil1\",\n      \"oil_name\": \"Oil\",\n      \"quantity\": 0,\n      \"rate\": 100\n    }\n  ],\n  \"amount_paid\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bill - Negative Rate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message mentions rate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.include('rate');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bill_number\": \"TEST-NEG\",\n  \"customer_id\": \"{{testCustomerId}}\",\n  \"customer_name\": \"Test\",\n  \"date\": \"2026-10-12\",\n  \"items\": [\n    {\n      \"oil_type_id\": \"oil1\",\n      \"oil_name\": \"Oil\",\n      \"quantity\": 10,\n      \"rate\": -100\n    }\n  ],\n  \"amount_paid\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bill - Empty Items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message mentions item requirement\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.include('item');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bill_number\": \"TEST-EMPTY\",\n  \"customer_id\": \"{{testCustomerId}}\",\n  \"customer_name\": \"Test\",\n  \"date\": \"2026-10-12\",\n  \"items\": [],\n  \"amount_paid\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Bills",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array of bills\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property('bill_number');",
+									"        pm.expect(jsonData[0]).to.have.property('total_amount');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bill By ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns single bill object\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"    pm.expect(jsonData.id).to.eql(pm.environment.get('testBillId'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bills?id={{testBillId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"],
+							"query": [
+								{
+									"key": "id",
+									"value": "{{testBillId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Bills - Due Only",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"All returned bills have due_amount > 0\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    jsonData.forEach(function(bill) {",
+									"        pm.expect(bill.due_amount).to.be.above(0);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bills?due_only=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"],
+							"query": [
+								{
+									"key": "due_only",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Payment to Bill",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Payment added and due recalculated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.payments).to.be.an('array');",
+									"    pm.expect(jsonData.payments.length).to.be.above(0);",
+									"    // Original bill: 1000 total, 500 paid, 500 due",
+									"    // After adding 200: 700 paid, 300 due",
+									"    pm.expect(jsonData.amount_paid).to.eql(700);",
+									"    pm.expect(jsonData.due_amount).to.eql(300);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"add_payment\",\n  \"id\": \"{{testBillId}}\",\n  \"payment\": {\n    \"date\": \"2026-10-12\",\n    \"amount\": 200,\n    \"note\": \"Partial payment via QA test\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bills",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Customer (Keep Bills Intact)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Customer deleted successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customers?id={{testCustomerId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "customers"],
+							"query": [
+								{
+									"key": "id",
+									"value": "{{testCustomerId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Bill",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Bill deleted successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bills?id={{testBillId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bills"],
+							"query": [
+								{
+									"key": "id",
+									"value": "{{testBillId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stock",
+			"item": [
+				{
+					"name": "Get Stock - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has stock and entries\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('stock');",
+									"    pm.expect(jsonData).to.have.property('entries');",
+									"    pm.expect(jsonData.stock).to.be.an('array');",
+									"    pm.expect(jsonData.entries).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Stock Entry - Production",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Stock entry created\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.entry_type).to.eql('production');",
+									"    pm.expect(jsonData.quantity).to.eql(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oil_type_id\": \"qa-test-oil\",\n  \"oil_name\": \"QA Test Oil 1L\",\n  \"quantity\": 100,\n  \"entry_type\": \"production\",\n  \"date\": \"2026-10-12\",\n  \"notes\": \"Test production entry\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/stock",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stock - Unauthenticated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.cookies.clear();"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has all required dashboard fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_sales');",
+									"    pm.expect(jsonData).to.have.property('total_purchases');",
+									"    pm.expect(jsonData).to.have.property('gross_profit');",
+									"    pm.expect(jsonData).to.have.property('pending_dues');",
+									"    pm.expect(jsonData).to.have.property('oil_wise_sales');",
+									"    pm.expect(jsonData).to.have.property('category_wise_purchases');",
+									"    pm.expect(jsonData).to.have.property('daily_chart');",
+									"    pm.expect(jsonData).to.have.property('recent_bills');",
+									"    pm.expect(jsonData).to.have.property('stock');",
+									"});",
+									"",
+									"pm.test(\"Numeric fields are numbers\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.total_sales).to.be.a('number');",
+									"    pm.expect(jsonData.total_purchases).to.be.a('number');",
+									"    pm.expect(jsonData.gross_profit).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "dashboard"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "P&L Report",
+			"item": [
+				{
+					"name": "Get P&L for Month",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has P&L fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('month');",
+									"    pm.expect(jsonData).to.have.property('total_billed');",
+									"    pm.expect(jsonData).to.have.property('total_collected');",
+									"    pm.expect(jsonData).to.have.property('customer_dues');",
+									"    pm.expect(jsonData).to.have.property('oil_breakdown');",
+									"    pm.expect(jsonData).to.have.property('expense_breakdown');",
+									"    pm.expect(jsonData).to.have.property('salary_breakdown');",
+									"    pm.expect(jsonData).to.have.property('gross_profit');",
+									"    pm.expect(jsonData).to.have.property('cash_profit');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pnl?month=2026-10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pnl"],
+							"query": [
+								{
+									"key": "month",
+									"value": "2026-10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get P&L - Missing Month Param",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error mentions month requirement\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.include('month');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pnl",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pnl"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "adminUser",
+			"value": "admin"
+		},
+		{
+			"key": "adminPass",
+			"value": "oilbiz2024"
+		}
+	]
+}

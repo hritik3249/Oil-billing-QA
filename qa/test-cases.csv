@@ -1,0 +1,62 @@
+ID,Module,Title,Priority,Preconditions,Steps,Expected Result,Actual Result,Status,Notes
+TC001,Authentication,Valid admin login,High,"Test DB configured, Admin credentials in .env.test.local","1. Navigate to /login
+2. Enter username: admin
+3. Enter password: oilbiz2024
+4. Click Login button","User logged in successfully, redirected to dashboard, oil_admin_auth cookie set",,,
+TC002,Authentication,Invalid username,High,On login page,"1. Enter username: wronguser
+2. Enter password: oilbiz2024
+3. Click Login","Login fails with 'Invalid credentials' error, Status 401",,,
+TC003,Authentication,Invalid password,High,On login page,"1. Enter username: admin
+2. Enter password: wrongpass
+3. Click Login","Login fails with 'Invalid credentials' error, Status 401",,,
+TC004,Authentication,Empty credentials,Medium,On login page,"1. Leave username and password empty
+2. Click Login","Login fails, validation error or 401 response",,,
+TC005,Authentication,Rate limit enforcement,High,On login page,"1. Attempt login with wrong password 5 times
+2. Attempt 6th login","After 5 failed attempts, 6th attempt returns 429 status with 'Too many attempts' message",,,Rate limit test - run LAST
+TC006,Authentication,Unauthenticated API access,High,Not logged in,"1. Send GET request to /api/customers without auth cookie","Returns 401 Unauthorized error",,,
+TC007,Authentication,Token expiry,Low,"Logged in, manually set expired token","1. Set oil_admin_auth cookie with expired timestamp
+2. Access any protected route","Redirected to login or 401 response",,,
+TC008,Customers,Create new customer,High,Logged in,"1. POST /api/customers with {name: 'Test Customer', area: 'Test Area', phone: '1234567890', vehicle_number: 'KA01AB1234'}","Customer created successfully with 201 status, returns customer object with UUID",,,
+TC009,Customers,Get all customers,High,"Logged in, at least 1 customer exists","1. GET /api/customers","Returns array of customers, status 200",,,
+TC010,Customers,Search customer by name,Medium,"Logged in, customer 'Test Customer' exists","1. GET /api/customers?search=Test","Returns filtered customers matching 'Test' in name",,,
+TC011,Customers,Update customer,High,"Logged in, customer exists","1. PUT /api/customers with {id: <customer_id>, name: 'Updated Name', area: 'New Area', phone: '9999999999', vehicle_number: 'KA02XY5678'}","Customer updated successfully, returns updated customer object",,,
+TC012,Customers,Delete customer,High,"Logged in, customer exists","1. DELETE /api/customers?id=<customer_id>","Customer deleted, returns {success: true}",,,
+TC013,Customers,Get customer by ID,Medium,"Logged in, customer exists","1. GET /api/customers?id=<customer_id>","Returns single customer object matching ID",,,
+TC014,Invoice Number,Get next invoice number,High,"Logged in, Test DB with bills","1. GET /api/invoice-number","Returns invoice number in format ET-{MM}-{N} where MM is current month, N is sequential",,,
+TC015,Invoice Number,Sequential numbering,High,"Logged in, bill ET-10-5 exists","1. GET /api/invoice-number
+2. Create bill with returned number
+3. GET /api/invoice-number again","Second call returns ET-10-6 (incremented by 1)",,,
+TC016,Invoice Number,Numeric sequencing after 9,High,"Logged in, bill ET-10-9 exists","1. GET /api/invoice-number","Returns ET-10-10 (not ET-10-10 sorted after ET-10-9 alphabetically)",,,
+TC017,Bills,Create bill with single item,High,"Logged in, customer exists","1. POST /api/bills with {bill_number: 'ET-10-100', customer_id: '<id>', customer_name: 'Test', date: '2026-10-12', items: [{oil_type_id: 'oil1', oil_name: 'Coconut Oil', quantity: 10, rate: 100}], amount_paid: 500}","Bill created with 201 status, total_amount: 1000, amount_paid: 500, due_amount: 500",,,
+TC018,Bills,Create bill with multiple items,High,"Logged in, customer exists","1. POST /api/bills with 3 items: [{oil_name: 'Oil A', quantity: 5, rate: 100}, {oil_name: 'Oil B', quantity: 10, rate: 50}, {oil_name: 'Oil C', quantity: 2, rate: 250}]","Bill created, total_amount correctly calculated as 1500 (500+500+500)",,,
+TC019,Bills,Bill with zero quantity,High,Logged in,"1. POST /api/bills with item {quantity: 0, rate: 100}","Returns 400 error 'Item quantity must be greater than 0'",,,
+TC020,Bills,Bill with negative rate,High,Logged in,"1. POST /api/bills with item {quantity: 10, rate: -100}","Returns 400 error 'Item rate cannot be negative'",,,
+TC021,Bills,Bill with empty items array,High,Logged in,"1. POST /api/bills with items: []","Returns 400 error 'At least one item is required'",,,
+TC022,Bills,Bill with huge numbers,Medium,Logged in,"1. POST /api/bills with item {quantity: 999999, rate: 999999}","Bill created, total calculated correctly (999998000001) without overflow",,,
+TC023,Bills,Edit bill items,High,"Logged in, bill exists","1. PUT /api/bills with {action: 'edit_bill', id: '<bill_id>', items: [updated items]}","Bill items updated, total_amount recalculated, due_amount adjusted based on existing payments",,,
+TC024,Bills,Add payment to bill,High,"Logged in, bill with due > 0 exists","1. PUT /api/bills with {action: 'add_payment', id: '<bill_id>', payment: {date: '2026-10-12', amount: 200, note: 'Partial payment'}}","Payment added to payments array, amount_paid increased, due_amount decreased",,,
+TC025,Bills,Delete payment from bill,Medium,"Logged in, bill with payments exists","1. PUT /api/bills with {action: 'delete_payment', id: '<bill_id>', payment_id: '<payment_id>'}","Payment removed, amount_paid and due_amount recalculated",,,
+TC026,Bills,Get bills by date range,Medium,"Logged in, bills exist across different dates","1. GET /api/bills?date_from=2026-10-01&date_to=2026-10-12","Returns only bills within specified date range",,,
+TC027,Bills,Filter bills with dues only,High,"Logged in, bills with due_amount > 0 exist","1. GET /api/bills?due_only=true","Returns only bills where due_amount > 0",,,
+TC028,Bills,Delete bill,High,"Logged in, bill exists","1. DELETE /api/bills?id=<bill_id>","Bill deleted, returns {success: true}",,,
+TC029,Stock,Add production entry,High,Logged in,"1. POST /api/stock with {oil_type_id: 'oil1', oil_name: 'Coconut Oil', quantity: 100, entry_type: 'production', date: '2026-10-12'}","Stock entry created with 201 status",,,
+TC030,Stock,Add adjustment entry (negative),Medium,Logged in,"1. POST /api/stock with {quantity: -10, entry_type: 'adjustment', notes: 'Damage'}","Adjustment entry created, quantity can be negative",,,
+TC031,Stock,Get current stock,High,"Logged in, stock entries exist","1. GET /api/stock","Returns stock array with oil_type_id, oil_name, produced, sold, balance",,,
+TC032,Stock,Stock calculation after bill,High,"Logged in, stock entry exists, bill created with same oil","1. Create stock entry for Oil A: 100 jars
+2. Create bill selling 20 jars of Oil A
+3. GET /api/stock","Stock balance shows 80 jars remaining (100 produced - 20 sold)",,,
+TC033,Purchases,Create purchase,High,Logged in,"1. POST /api/purchases with {category: 'Raw Material', description: 'Test purchase', supplier: 'ABC Supplier', amount: 5000, amount_paid: 2000, date: '2026-10-12'}","Purchase created, due_amount calculated as 3000",,,
+TC034,Purchases,Invalid purchase category,Medium,Logged in,"1. POST /api/purchases with category: 'Invalid Category'","Purchase created (no validation) or appropriate error",,,
+TC035,Purchases,Get purchases by date range,Medium,"Logged in, purchases exist","1. GET /api/purchases?date_from=2026-10-01&date_to=2026-10-12","Returns purchases within date range",,,
+TC036,Employees,Create employee,High,Logged in,"1. POST /api/employees with {name: 'John Doe', role: 'Worker', monthly_salary: 15000, join_date: '2026-10-01'}","Employee created with 201 status",,,
+TC037,Employees,Get all employees,Medium,"Logged in, employees exist","1. GET /api/employees","Returns array of employees",,,
+TC038,Salary,Create salary record,High,"Logged in, employee exists","1. POST /api/salary with {employee_id: '<id>', employee_name: 'John Doe', month: '2026-10', salary_due: 15000, amount_paid: 10000}","Salary record created, due_amount: 5000",,,
+TC039,Salary,Get salary by month,Medium,"Logged in, salary records exist","1. GET /api/salary?month=2026-10","Returns salary records for October 2026",,,
+TC040,P&L Report,Get monthly P&L,High,"Logged in, bills and purchases exist for October","1. GET /api/pnl?month=2026-10","Returns P&L report with total_billed, total_expenses, gross_profit, cash_profit, oil_breakdown, expense_breakdown",,,
+TC041,Dashboard,Load dashboard stats,High,"Logged in, data exists","1. GET /api/dashboard","Returns dashboard stats: total_sales, total_purchases, gross_profit, pending_dues, oil_wise_sales, recent_bills, stock",,,
+TC042,UI,Mobile viewport - Login,Medium,Browser at 375px width,"1. Open /login on mobile viewport
+2. Enter credentials
+3. Login","Login form renders correctly, all fields accessible and functional",,,
+TC043,UI,Mobile viewport - Dashboard,Medium,"Logged in, mobile viewport","1. Navigate to dashboard on mobile","Dashboard renders responsively, charts and tables are scrollable/readable",,,
+TC044,Security,SQL injection in customer name,High,Logged in,"1. POST /api/customers with name: ""Test' OR '1'=1""","Customer created with literal name, no SQL injection occurs",,,
+TC045,Security,XSS in bill notes,Medium,Logged in,"1. POST /api/bills with notes: '<script>alert(""XSS"")</script>'","Notes stored as-is, script not executed when displayed",,,
